@@ -18,6 +18,7 @@ it. One file per vendor makes that impossible to write, because there is nowhere
 | Apple | `apple.md` |
 | Ashby | `ashby.md` |
 | Breezy | `breezy.md` |
+| CareerPlug (`<tenant>-careers.careerplug.com/jobs/<id>`) | `careerplug.md` |
 | Dayforce | `dayforce.md` |
 | Bizneo (`opportunities.<co>.<tld>/jobs/<slug>`) | `bizneo.md` |
 | Djinni | `djinni.md` |
@@ -32,6 +33,11 @@ it. One file per vendor makes that impossible to write, because there is nowhere
 | Manatal (`careers-page.com`) | `manatal.md` |
 | One-off and unbranded forms | `other-forms.md` |
 | Peoplise (`live.peoplise.com/<co>/Application/...`) | `peoplise.md` |
+| Paylocity (`recruiting.paylocity.com/Recruiting/Jobs/...`) | `paylocity.md` |
+| Paycom (`paycomonline.net/v4/ats/web.php/portal/<clientkey>/jobs/<id>`) | `paycom.md` |
+| ApplicantStack (`<co>.applicantstack.com/x/apply/<id>`) | `applicantstack.md` |
+| PageUp (`secure.<dcN>.pageuppeople.com/apply/<tenant>/aw/applicationForm/...`, often behind a university careers page) | `pageup.md` |
+| ADP Workforce Now (`workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=...&jobId=...`) | `adp.md` |
 | Personio | `personio.md` |
 | Pinpoint | `pinpoint.md` |
 | PeopleForce (`careers.<co>.com/v/<id>-<slug>`, "Powered by PeopleForce") | `peopleforce.md` |
@@ -67,6 +73,7 @@ Section = vendor name; BambooHR, Revolut and account walls → Hand off; Viterbi
 | `<co>.pinpointhq.com/en/postings/<uuid>` | Pinpoint |
 | `ats.rippling.com/...` (also white-labelled) | Rippling |
 | `<co>.breezy.hr/p/<id>/apply` | Breezy |
+| `<tenant>-careers.careerplug.com/jobs/<id>` | CareerPlug |
 | `jobs.dayforcehcm.com` | Dayforce |
 | `smartapply.indeed.com` (Glassdoor "Easy Apply" opens this) | Indeed SmartApply |
 | `jobs.apple.com` | Apple |
@@ -147,7 +154,7 @@ Section = vendor name; BambooHR, Revolut and account walls → Hand off; Viterbi
 - **A chat-bot overlay can stop the page rendering at all.** eBay's careers portal served 361 characters of body text and no job content until the chat widget was closed, which reads exactly like a dead or geo-blocked page. Close the overlay, then re-read before concluding anything. Re-measured 29 Sept: still exactly 362 characters, and the close control is the `X` in the widget's own header.
 - ⛔ **The resume upload freezes the renderer, and the resume is required, so the wizard cannot be driven at all.** Measured 24 and 29 Sept on eBay's Phenom apply flow (`/us/en/apply?jobSeqNo=…`, five steps: My Information, My Experience, Application Questions, Voluntary Disclosures, Review; no account needed). Isolated on the second attempt: filling every step-1 field by hand and pressing Next does **not** freeze anything, it just refuses to advance, because the upload section is marked required. Attaching the file freezes the tab within seconds and it stays frozen through more than two minutes of waiting; only a reload recovers it, and that empties the form. Jumping straight to `&step=3` in the URL bounces back to step 1, so the screening questions cannot be read either. **Treat a Phenom apply flow as a hand-off and say why**: everything except the upload works, which is what makes it tempting to retry.
   **A second tenant, and the freeze can be late.** Measured 22 Oct 2026 on Siemens Healthineers' "Quick Apply Form" (`careers.siemens-healthineers.com/global/en/apply?jobSeqNo=…`, steps About Me, My Profile, Review, no account): the upload returned at once and a JS read straight after it still answered, which looks like the tenant is fine. About ten seconds later the tab stopped responding to screenshots and scripts (CDP timeout at 45 s). A second attempt the same day filled every field first (the selects take `form_input` by ref; their labels shift by one after the "How did you hear" answer inserts a Source select, so never pick by label index) and then attached only the portfolio PDF to the optional "Additional attachments" input: that froze the tab too. So it is any file set through the extension's upload, not the resume parser. Fill nothing: hand it over with the answers in the record, and the candidate uploads by hand.
-- **Tab discipline:** each filled/handed-over form keeps its own tab; open the next posting with `tabs_create_mcp`, never `navigate` away. "Leave site?" = filled form there; never `force:true`. Confirm with `tabs_context_mcp` before reporting.
+- **Tab discipline:** each filled/handed-over form keeps its own tab; open the next posting with `tabs_create_mcp`, never `navigate` away. "Leave site?" = filled form there; never `force:true`. Confirm with `tabs_context_mcp` before reporting. All of a run's tabs live in **one** group kept alive by a home tab, each titled `Seekter · <Company>` and listed in `runs/open-tabs.md`; tabs outside that group belong to someone else (another agent, the candidate) and are never touched (`seekter-run` §6).
 - **Dedup by ATS job ID/UUID**, not title/company.
 - **`javascript_tool` quirks:**
   - No `return`; the last expression is the result.

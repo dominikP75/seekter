@@ -1,6 +1,7 @@
 # Workday
 
 - **Account:** mandatory (also for "Apply Manually"); human creates/signs in, Claude fills.
+- **Straight to the account page:** `<job url>/apply/applyManually` opens the Create Account form directly on most tenants. Some tenants open a social Sign In page instead (Apple / Google / LinkedIn / email): there, Sign in with email leads to a Sign In form with a Create Account link below it.
 - **Start:** **Apply Manually**. Don't use "Autofill with Resume" (broken experience blocks). Cleanup helper, 1 s between calls:
   ```js
   window.DEL=function(){var b=[...document.querySelectorAll('button')].filter(function(e){return /delete/i.test((e.innerText||'')+(e.getAttribute('aria-label')||''))&&e.getBoundingClientRect().width>0;});

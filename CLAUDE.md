@@ -11,7 +11,7 @@ Seekter is a job-search agent that runs inside Claude Code: it searches job sour
 | `reference/employers/` | `catalog.json`, the shared list of companies Seekter can read directly, with where each one hires; `README.md` says what may go in (public facts only) | tracked |
 | `reference/ats/` | One file per application form system: `_core.md` (universal rules, the identify table, the hand-off list) plus `greenhouse.md`, `ashby.md`, `workday.md`, `lever.md`… | tracked |
 | `templates/` | Profile and search-config templates that `/seekter-init` fills | tracked |
-| `scripts/seekter.mjs` | Tracker CLI: check, check-many, add, move, list, index, stats (`--by <field>` breaks sent, replies and interviews down by source, form system, title, fit…) | tracked |
+| `scripts/seekter.mjs` | Tracker CLI: check, check-many, add, move, list, index, stats (`--by <field>` breaks sent, replies and interviews down by source, form system, title, fit…). `check` and `check-many` also read other job agents' tables named in `external_trackers` (read-only) and hold a company one of them applied to | tracked |
 | `scripts/freehire_sweep.mjs` | Step 1 API sweep with the profile's queries | tracked |
 | `scripts/employer_sweep.mjs` | Step 1 API sweep of the employer watchlist (`employers` in settings) and, with `--hn`, the monthly HN "Who is hiring?" thread | tracked |
 | `scripts/live.mjs` | Is a posting still open? Asks its own system right before a form: OPEN, CLOSED or UNKNOWN | tracked |
