@@ -1,5 +1,38 @@
 # Inbox: inbound mail and reply analysis
 
+## Already applied? (before every form)
+
+The tracker only knows what this kit sent. The candidate may also apply by hand, or run a second job agent beside Seekter (`external_trackers` in `profile/settings.json` covers the agents that keep a table; the inbox covers everything else). Measured 22 Nov 2026: one agent applied to a job and the other opened the same job days later. The confirmation mail is the one record every route leaves, so the inbox is read before a form is opened, not after.
+
+**Who does it:** one subagent per batch (`seekter-run` §4 step 1), so the mail never fills the run's own context. Give it the list of `company | role | apply URL` and this section. It only reads: no labels, no replies, no drafts, nothing marked read.
+
+**Query, one per company** (all mail, so labels, archive and the Updates tab are included):
+
+```
+in:anywhere newer_than:180d "<Company>" (applied OR application OR "thank you for applying" OR "received your application" OR "application received" OR "thank you for your interest")
+```
+
+Use the company's short name as people write it ("Acme Capital", not "Acme Capital Holdings, LLC"). When the result is empty and the name has a common short form or brand (`Acme Toyota Material Handling` → `Acme`), run the short form too.
+
+**What counts:**
+- A confirmation from the company's domain or an application system: Greenhouse (`greenhouse-mail.io`), Workday (`myworkday.com`), Lever, Ashby, iCIMS, Jobvite, SmartRecruiters, Paylocity, Paycom, Oracle Cloud, or the company's own careers address (`careers@…`).
+- "Security code for your application to <Company>" means a form was being submitted at that moment: treat it as applied on that date unless a later mail says otherwise.
+- A rejection, an assessment invitation or an interview invitation also proves an application.
+- Ignore job-alert digests, newsletters, "jobs you may like" and marketing.
+
+**Subjects often name nobody.** Paylocity sends "Thank you for applying!" with the company only in the body, and some employers confirm with "Prepare for your application process with <Company>", naming no role. When the subject does not name the role, open the message (`get_thread`) and read the role from the body. Never decide "same role" from the company name alone.
+
+**Return one line per company**, and write them to `runs/<YYYY-MM-DD>/inbox-check.md`:
+
+```
+APPLIED   <Company> | <role from the mail, or "role not named"> | <mail date> | <sender> | <subject>
+REJECTED  …same fields…
+INTERVIEW …same fields…
+NONE      <Company>
+```
+
+Measured 23 Nov 2026 on four known applications: the query found all four (a company careers address plus a Greenhouse security code; a confirmation with no role in the subject; Jobvite with the role in the subject; Paylocity with the company only in the body) and returned nothing for a company never applied to.
+
 ## Inbound recruiter mail: verify before replying
 
 An unsolicited approach is not a source, it is a claim. Four checks, all cheap, before anything is sent:

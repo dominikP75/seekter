@@ -330,6 +330,57 @@ describe("tracker", () => {
     assert.ok(many.out.startsWith("SAMECO"), many.out);
   });
 
+  // -- another agent's tracker ------------------------------------------
+
+  // Measured 22 Nov 2026: a second job agent (Career Ops) applied to a company and Seekter
+  // opened the same company's job days later. Its table is read, never written.
+  const careerOps = (rows) => {
+    const p = path.join(tmp, "other-agent", "applications.md");
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, "# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | Notes |\n" +
+      "|---|------|---------|------|-------|--------|-------|\n" +
+      rows.map((r, i) => `| ${i + 1} | ${r.date} | ${r.company} | ${r.role} | 4/5 | ${r.status} | x |`).join("\n") + "\n");
+    profile("settings.json", JSON.stringify({ external_trackers: [{ name: "Career Ops", path: p }] }));
+    return p;
+  };
+
+  test("a company the other agent applied to is held and named", () => {
+    const before = fs.readFileSync(careerOps([{ date: TODAY, company: "Acme Corp", role: "Analyst", status: "Applied" }]), "utf8");
+    const r = cli("check", "https://acme.com/careers/7654321", "--company", "Acme Corp");
+    assert.equal(r.rc, 2, r.out);
+    assert.match(r.out, /applied by Career Ops: applied \| Analyst/);
+    assert.match(r.out, /HOLD/);
+    const many = cliIn("https://acme.com/careers/7654321 | Acme Corp\n", "check-many");
+    assert.ok(many.out.startsWith("HOLD"), many.out);
+    assert.match(many.out, /\(Career Ops\)/);
+    assert.equal(fs.readFileSync(path.join(tmp, "other-agent", "applications.md"), "utf8"), before, "the other tracker is never written");
+  });
+
+  test("rows the other agent only evaluated or discarded hold nothing", () => {
+    careerOps([{ date: TODAY, company: "Acme", role: "Analyst", status: "Evaluated" },
+      { date: TODAY, company: "Acme", role: "Associate", status: "Discarded" }]);
+    const r = cli("check", "https://acme.com/careers/7654321", "--company", "Acme");
+    assert.equal(r.rc, 0, r.out);
+    assert.doesNotMatch(r.out, /Career Ops/);
+  });
+
+  test("an old application by the other agent is shown but outside the window", () => {
+    careerOps([{ date: "2020-01-01", company: "Acme", role: "Analyst", status: "Applied" }]);
+    const r = cli("check", "https://acme.com/careers/7654321", "--company", "Acme");
+    assert.equal(r.rc, 0, r.out);
+    assert.match(r.out, /applied by Career Ops/);
+  });
+
+  test("a missing other tracker is a warning and a settings problem, never a silent pass", () => {
+    profile("settings.json", JSON.stringify({ external_trackers: [{ name: "Career Ops", path: path.join(tmp, "nope.md") }] }));
+    const r = cli("check", "https://acme.com/careers/7654321", "--company", "Acme");
+    assert.equal(r.rc, 0);
+    assert.match(r.err, /Career Ops tracker not read/);
+    withTemplate();
+    const s = cli("settings", "--check");
+    assert.match(s.out + s.err, /external_trackers: Career Ops is not a file/);
+  });
+
   test("a name inside another word is not the same company", () => {
     // Measured 5 and 6 Oct: "telli" matched Intellias and "Flex" matched WorkFlex, and
     // both were held under the 30-day rule for employers never applied to.

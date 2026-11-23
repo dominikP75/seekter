@@ -4,6 +4,16 @@ The version is the git tag; there is no version file. Each release is also on
 [the releases page](https://github.com/selfishprimate/seekter/releases) with the
 same text.
 
+## Unreleased
+
+For candidates who run a second job agent beside Seekter, or stop runs half-way.
+
+- **`check` reads other agents' trackers.** New setting `external_trackers`: a list of `{"name", "path"}` pointing at another agent's markdown applications table (Career Ops' `data/applications.md`, for example). Read-only. `check` prints `same company, applied by <agent>` and holds the company within `same_company_days`, exactly like one of Seekter's own applications; `check-many` tags the line `(<agent>)`. Only rows that mean an application went out (applied, responded, interview, offer, rejected) count. `settings --check` reports a path that is not a file.
+- **Already-applied check in the inbox.** Before the first form, `/seekter-run` sends one subagent through all mail for every company in the queue (`reference/sources/inbox.md` → "Already applied?"). A confirmation for the same role is recorded and the form is never opened; another role at the same company is held.
+- **One tab group per run.** A home tab keeps the group alive, since closing a group's last tab deletes it. Every application tab is titled `Seekter · <Company>`, and tabs outside the run's group (another agent's, the candidate's) are never touched.
+- **Resuming without duplicate tabs.** Every application tab is written to `runs/open-tabs.md` when it opens. The next run lists the ones it cannot reach, waits for the candidate to close them, then reopens each once and finishes them before any new posting.
+- Paylocity: work-history dates must be typed for real (the setter leaves them empty on the review page); custom dropdowns are picked by option element, not by coordinate.
+
 ## v0.16.1 — 12 November 2026
 
 Two of 0.16.0's checks could send a run the wrong way without saying so, and

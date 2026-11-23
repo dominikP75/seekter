@@ -578,6 +578,57 @@ export function companyExempt(company) {
   return Array.isArray(list) && list.some((n) => typeof n === "string" && sameCompany(n, company || ""));
 }
 
+// ---------- other agents' trackers ----------
+// Another job agent can work for the same candidate beside Seekter (Career Ops keeps its list in
+// data/applications.md). Seekter never writes there; `check` and `check-many` read it, so neither
+// agent sends a second application to a company the other has just applied to. Measured 22 Nov
+// 2026: the candidate saw one agent apply to a job and the other open the same job days later.
+// The files are the candidate's, named in `external_trackers` in profile/settings.json as
+// [{"name": "Career Ops", "path": "/abs/path/data/applications.md"}]. A file is any markdown
+// table with Company and Status columns (Role and Date are read when present). Only statuses that
+// mean an application went out count; evaluated, discarded or skipped rows are ignored.
+const EXTERNAL_STATUS = { applied: "applied", responded: "applied", interview: "interviewing",
+  interviewing: "interviewing", offer: "offer", rejected: "rejected" };
+
+export function externalApps() {
+  let list = [];
+  try { list = settings().external_trackers || []; } catch { list = []; }
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const t of list) {
+    if (!t || typeof t.path !== "string" || !t.path.trim()) continue;
+    const name = typeof t.name === "string" && t.name.trim() ? t.name.trim() : "another tracker";
+    let p = t.path.startsWith("~") ? path.join(os.homedir(), t.path.slice(1)) : t.path;
+    if (!path.isAbsolute(p)) p = path.join(ROOT, p);
+    let text;
+    // Never silently: an unreadable file would let a duplicate through looking checked.
+    try { text = fs.readFileSync(p, "utf8"); } catch (e) {
+      console.error(`warning: ${name} tracker not read (${e.code || e.message}): ${p}`);
+      continue;
+    }
+    let cols = null;
+    for (const line of text.split(LINE_BREAK)) {
+      if (!line.trim().startsWith("|")) { cols = null; continue; }
+      const cells = splitRow(line);
+      if (!cols) {
+        const idx = (n) => cells.findIndex((c) => c.trim().toLowerCase() === n);
+        if (idx("company") >= 0 && idx("status") >= 0) {
+          cols = { company: idx("company"), status: idx("status"), role: idx("role"), date: idx("date") };
+        }
+        continue;
+      }
+      if (cells.every((c) => /^\s*:?-{2,}:?\s*$/.test(c))) continue;
+      const status = EXTERNAL_STATUS[(cells[cols.status] || "").toLowerCase().replace(/[^a-z]/g, "")];
+      const company = (cells[cols.company] || "").trim();
+      if (!status || !company) continue;
+      const date = cols.date >= 0 ? (cells[cols.date] || "").trim() : "";
+      out.push({ company, role: cols.role >= 0 ? (cells[cols.role] || "").trim() : "", status,
+        applied: date, updated: date, _external: name });
+    }
+  }
+  return out;
+}
+
 function holding(records, days) {
   const since = daysAgo(days);
   return records.filter((r) => ALWAYS_HOLDING.includes(r.status) ||
@@ -636,6 +687,12 @@ function cmdCheck(a) {
   for (const r of company) {
     console.log(`  same company, other role: ${pyStr(r.status)} | ${pyStr(r.role)} | ${pyStr(r.applied || r.updated)}`);
   }
+  if (a.company) {
+    for (const r of externalApps().filter((x) => sameCompany(a.company, x.company))) {
+      company.push(r);
+      console.log(`  same company, applied by ${r._external}: ${pyStr(r.status)} | ${pyStr(r.role)} | ${pyStr(r.applied)}`);
+    }
+  }
   const days = sameCompanyDays();
   if (company.length && companyExempt(a.company)) {
     console.log(`not held: ${pyStr(a.company)} is in same_company_exempt; read the roles above for a repost`);
@@ -653,6 +710,7 @@ function cmdCheck(a) {
 function cmdCheckMany() {
   const apps = allApps();
   const keys = new Map(apps.map((r) => [r.job_key || jobKey(r.url || ""), r]));
+  const external = externalApps();
   const days = sameCompanyDays();
   let input = "";
   try { input = fs.readFileSync(0, "utf8"); } catch { input = ""; }
@@ -670,10 +728,10 @@ function cmdCheckMany() {
       console.log(`DUP    ${line} -> ${pyStr(r.status)} ${label(r)}` + (why ? ` (${why})` : ""));
       continue;
     }
-    const same = apps.filter((x) => co && sameCompany(co, x.company || ""));
+    const same = [...apps, ...external].filter((x) => co && sameCompany(co, x.company || ""));
     const tag = holding(same, days).length && !companyExempt(co) ? "HOLD   " : same.length ? "SAMECO " : "NEW    ";
     const tail = same.length ? ` -> ${same.length} earlier: ` +
-      same.slice(0, 3).map((x) => `${pyStr(x.status)}:${pyStr(x.role)}`).join(", ") : "";
+      same.slice(0, 3).map((x) => `${pyStr(x.status)}:${pyStr(x.role)}` + (x._external ? ` (${x._external})` : "")).join(", ") : "";
     console.log(tag + line + tail);
   }
   return 0;
@@ -813,6 +871,17 @@ function cmdSettings(a) {
   if (typeof days !== "number" || !Number.isInteger(days) || days < 0) problems.push("same_company_days must be a whole number of days");
   const exempt = cfg.same_company_exempt;
   if (exempt !== undefined && !(Array.isArray(exempt) && exempt.every((n) => typeof n === "string"))) problems.push("same_company_exempt must be a list of company names");
+  const ext = cfg.external_trackers;
+  if (ext !== undefined) {
+    if (!(Array.isArray(ext) && ext.every((t) => isObj(t) && typeof t.path === "string" && t.path.trim()))) {
+      problems.push('external_trackers must be a list of {"name": "...", "path": "..."}');
+    } else {
+      for (const t of ext) {
+        const p = t.path.startsWith("~") ? path.join(os.homedir(), t.path.slice(1)) : path.isAbsolute(t.path) ? t.path : path.join(ROOT, t.path);
+        if (!isFile(p)) problems.push(`external_trackers: ${t.name || "a tracker"} is not a file at ${p}`);
+      }
+    }
+  }
   const minFit = cfg.easy_apply_min_fit;
   if (minFit !== undefined && !(Number.isInteger(minFit) && minFit >= 1 && minFit <= 5)) problems.push("easy_apply_min_fit must be a whole number from 1 to 5");
   const prof = path.join(ROOT, "profile", "profile.md");

@@ -5,6 +5,8 @@
   "same_company_days": 30,
   "_same_company_exempt": "Companies large enough that one team's hiring says nothing about another's, such as Amazon, Google or Microsoft. A posting at a company listed here is never held by same_company_days; `check` still shows the earlier roles, so read them for a repost of the same role. Names match the way the hold does: the same name, or whole words of it.",
   "same_company_exempt": [],
+  "_external_trackers": "Other job agents applying for you beside Seekter, such as Career Ops. Each entry is {\"name\": \"Career Ops\", \"path\": \"<absolute path to its applications table>\"}: a markdown table with Company and Status columns (Role and Date are read when present). Seekter only reads these files. `check` and `check-many` print the matching rows and hold the company exactly as one of Seekter's own applications would (same_company_days), so the two agents never apply to the same company twice. Rows marked evaluated, discarded or skipped are ignored.",
+  "external_trackers": [],
   "_easy_apply_min_fit": "The report's list of LinkedIn postings you send yourself (Easy Apply, or no employer board found) is sorted by fit score, 1-5. Postings scored below this number are left out of that list and given as one count line instead; ask for them and they are shown. 1 shows them all. It never shortens what Seekter applies to itself: there the score only orders. See /seekter-run section 7.",
   "easy_apply_min_fit": 1,
   "languages": [
