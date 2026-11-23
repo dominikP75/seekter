@@ -1,0 +1,14 @@
+# Paylocity
+
+- **URLs:** posting `recruiting.paylocity.com/Recruiting/Jobs/Details/<id>`; form `.../Jobs/Apply/<id>`; success `.../Jobs/Success/<id>`. No account needed.
+- **Turn off "Fill out application with my resume" (`#useAttachedResumeToFillOutApplication`, checked by default) before uploading.** The parse put a wrong address into the fields (measured 16 Nov 2026). With it off, the upload only attaches the file.
+- **Resume upload:** `#btn-resume` is a hidden file input. Make it visible, give it an `aria-label`, `find` it, then `file_upload`.
+- **Text fields have ids, not names** (`info.firstName`, `info.email`, `info.cellPhone`, `public-site-address-address-1`, `-city`, `-zip`). The native value setter plus `input`/`change`/`blur` events sticks.
+- **County is a plain text box and is required. State is a combobox that matches only the two-letter code**: "Illinois" returns "No Results Found", "IL" works. The state's text input stays empty in `.value` after a pick, so check the widget's visible text instead.
+- **The SMS permission question is a required custom dropdown (`--` / `Yes*` / `No`).** `form_input` rejects it (a DIV); click it and pick by coordinate. The form says No does not affect consideration.
+- **Address line 1 offers an autocomplete list; pick the matching row.** It fills State (as the code), the city and ZIP+4 in one click, which is easier than the State combobox.
+- **Work-history dates (`txt-workHistory-startDate-<n>` / `-endDate-<n>`, `MM/YYYY`) must be typed for real.** The native setter shows the value in the box, yet the review step prints an empty "Dates" for every job, and that is what gets submitted. Measured 20 Nov 2026: caught only on the review page. Click the field, select all, delete, type `05/2025`, press Tab; then check the review step shows `05/2025 - 10/2026` before submitting. The other work-history and education text fields take the setter fine.
+- **Custom dropdowns (`div[role=combobox]` with `<id>__listbox__option__<n>`) shift under coordinate clicks** as the page reflows; one click landed on the option above the intended one. Pick by dispatching `mousedown`, `mouseup` and `click` on the option element found by its text, then read the combobox's `innerText` back.
+- **Tenants can make work history required**, with "May We Contact for Reference?". Answering Yes reveals required supervisor name, email, phone and position fields, so answer No unless the profile holds them.
+- **The review step (last step) can hold its own required question** ("Are you authorized to work lawfully in the United States?") that appears nowhere earlier. The first Submit only shows "Please select Yes or No" under it; answer it and submit again. Success URL: `.../Jobs/Success/<id>`.
+- Work and education history are optional when a resume is attached (unless the tenant marks them required, above). The required acknowledgement checkbox is `#applyAcknowledgement`.

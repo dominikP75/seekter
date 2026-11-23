@@ -18,6 +18,7 @@ it. One file per vendor makes that impossible to write, because there is nowhere
 | Apple | `apple.md` |
 | Ashby | `ashby.md` |
 | Breezy | `breezy.md` |
+| CareerPlug (`<tenant>-careers.careerplug.com/jobs/<id>`) | `careerplug.md` |
 | Dayforce | `dayforce.md` |
 | Bizneo (`opportunities.<co>.<tld>/jobs/<slug>`) | `bizneo.md` |
 | Djinni | `djinni.md` |
@@ -32,6 +33,11 @@ it. One file per vendor makes that impossible to write, because there is nowhere
 | Manatal (`careers-page.com`) | `manatal.md` |
 | One-off and unbranded forms | `other-forms.md` |
 | Peoplise (`live.peoplise.com/<co>/Application/...`) | `peoplise.md` |
+| Paylocity (`recruiting.paylocity.com/Recruiting/Jobs/...`) | `paylocity.md` |
+| Paycom (`paycomonline.net/v4/ats/web.php/portal/<clientkey>/jobs/<id>`) | `paycom.md` |
+| ApplicantStack (`<co>.applicantstack.com/x/apply/<id>`) | `applicantstack.md` |
+| PageUp (`secure.<dcN>.pageuppeople.com/apply/<tenant>/aw/applicationForm/...`, often behind a university careers page) | `pageup.md` |
+| ADP Workforce Now (`workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=...&jobId=...`) | `adp.md` |
 | Personio | `personio.md` |
 | Pinpoint | `pinpoint.md` |
 | PeopleForce (`careers.<co>.com/v/<id>-<slug>`, "Powered by PeopleForce") | `peopleforce.md` |
@@ -67,6 +73,7 @@ Section = vendor name; BambooHR, Revolut and account walls → Hand off; Viterbi
 | `<co>.pinpointhq.com/en/postings/<uuid>` | Pinpoint |
 | `ats.rippling.com/...` (also white-labelled) | Rippling |
 | `<co>.breezy.hr/p/<id>/apply` | Breezy |
+| `<tenant>-careers.careerplug.com/jobs/<id>` | CareerPlug |
 | `jobs.dayforcehcm.com` | Dayforce |
 | `smartapply.indeed.com` (Glassdoor "Easy Apply" opens this) | Indeed SmartApply |
 | `jobs.apple.com` | Apple |
