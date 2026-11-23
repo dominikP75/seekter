@@ -21,6 +21,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fs.realpathSync(fileURLToPath(import.meta.url)));
@@ -1033,7 +1034,16 @@ export function cmdIndex(a, quiet = false) {
   fs.mkdirSync(APPS, { recursive: true });
   fs.writeFileSync(path.join(APPS, "README.md"), lines.join("\n"), "utf8");
   if (!quiet) console.log(`applications/README.md (${rs.length} records, ${months.length} months)`);
+  rebuildTrackerPage();
   return 0;
+}
+
+// Refresh applications/tracker.html alongside the README index. Runs in a child process so
+// a dashboard problem can never fail or slow down a tracker write; any error is ignored.
+function rebuildTrackerPage() {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "tracker_html.mjs");
+  if (!fs.existsSync(script)) return;
+  try { execFileSync(process.execPath, [script], { stdio: "ignore", timeout: 15000 }); } catch { /* best effort */ }
 }
 
 // Move a v1 tracker (applications/<status>/*.md) to the month layout.
